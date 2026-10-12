@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.1.0/plugin.schema.json",
+  "name": "studio-framework",
+  "version": "0.1.0",
+  "description": "Local multi-expert studio framework: Feature Pod pipeline + Review Board gates + Orchestrator-Only lead, with verify-never-trust checks, gate-driven rework, receipts and resumable state.",
+  "author": {
+    "name": "yangdagang"
+  },
+  "license": "MIT",
+  "keywords": [
+    "agent-plugins",
+    "agent-skills",
+    "multi-agent",
+    "orchestration",
+    "gates",
+    "claude-code"
+  ]
+}

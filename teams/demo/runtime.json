@@ -1,0 +1,22 @@
+{
+  "team": "studio-local",
+  "leadAgent": "orchestrator",
+  "aliases": {},
+  "members": [
+    {
+      "name": "scout",
+      "agentType": "hotrank-scout",
+      "status": "idle"
+    },
+    {
+      "name": "writer",
+      "agentType": "fiction-writer",
+      "status": "idle"
+    },
+    {
+      "name": "gate",
+      "agentType": "gate-reviewer",
+      "status": "idle"
+    }
+  ]
+}
