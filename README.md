@@ -2,7 +2,7 @@
 
 Local multi-expert studio framework: **Feature Pod** pipeline + **Review Board** gates + **Orchestrator-Only** lead, with verify-never-trust checks, gate-driven rework, receipts and resumable state.
 
-[![conformance](https://img.shields.io/badge/Agent%20Plugins-1.1.0%20conformant-success)](https://agent-plugins.org) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![validate](https://github.com/nrq84t6f85-glitch/studio-framework/actions/workflows/validate.yml/badge.svg)](https://github.com/nrq84t6f85-glitch/studio-framework/actions/workflows/validate.yml) [![conformance](https://img.shields.io/badge/Agent%20Plugins-1.1.0%20conformant-success)](https://agent-plugins.org) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
 ## Why
 The valuable part of a multi-agent studio is not the chat UI - it is the *discipline*:
