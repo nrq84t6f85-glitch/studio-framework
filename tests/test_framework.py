@@ -14,7 +14,7 @@ t('verdict PASS(cn)', v.parse_verdict('结论：通过\nG1 过')['verdict'] == '
 t('verdict CONDITIONAL(cn)', v.parse_verdict('结论：带条件过\nG1 不过')['verdict'] == 'CONDITIONAL')
 t('verdict REJECT(cn)', v.parse_verdict('结论：不过\n必改：')['verdict'] == 'REJECT')
 t('G-line FAIL', v.parse_verdict('G1 开篇钩：不过')['gates'].get('G1') == 'FAIL')
-rt = json.loads((F / 'teams' / 'demo' / 'runtime.json').read_text(encoding='utf-8'))
+rt = json.loads((F / 'teams' / 'studio-local' / 'runtime.json').read_text(encoding='utf-8'))
 t('demo registry has 3 seats', len(rt['members']) == 3, str(len(rt['members'])))
 t('seat prompts present', all((F / 'docs' / (m['agentType'] + '.md')).exists() for m in rt['members']))
 r = subprocess.run(['/usr/bin/python3', str(F / 'runner' / 'studio-run.py'), 'dry-run'], capture_output=True, text=True, cwd=str(F))
