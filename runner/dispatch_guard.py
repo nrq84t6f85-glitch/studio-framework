@@ -26,7 +26,7 @@ def gaps_of(text):
     if not (re.search(r'[\w\-]+\.md', text) or re.search(r'[\w\-]+\.py', text)): g.append('C4-no deliverable name')
     if re.search(r'已执行|已做完|已完成|already executed|done', text, re.I) and not re.search(r'行\s*\d+|\d+\s*B\b|md5|stdout|运行结果', text):
         g.append('C5-claims execution without evidence')
-    if re.search(r'三席|多席|seats?|各席', text, re.I) and text.count('.md') <= 1: g.append('C6-one seat claims many')
+    if re.search(r'three seats|multiple seats|三席|多席|各席', text, re.I) and text.count('.md') <= 1: g.append('C6-one seat claims many')
     if not re.search(r'回读|已验|已核|ls\s+-la|verify|read back', text, re.I): g.append('C7-no read-back')
     return g
 

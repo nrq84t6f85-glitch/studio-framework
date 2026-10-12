@@ -19,7 +19,7 @@ t('weights sum to 100', sum(w) == 100, str(sum(w)))
 t('baseline score', sc.total(dims, w) == 88.8, str(sc.total(dims, w)))
 t('weight change can flip the verdict', sc.total(dims, variants['shortweak']) < veto, str(sc.total(dims, variants['shortweak'])))
 gd = F / 'runner' / 'dispatch_guard.py'
-good = 'identity: reviewer; registered: yes; read-only, copy run; command python3 probe.py; deliverable review.md; verified exists'
+good = 'identity: reviewer; registered: yes; read-only copy run; command python3 probe.py -> 42 lines of output; deliverable review.md; read back: verified exists'
 r = subprocess.run(['/usr/bin/python3', str(gd), '--desc', good], capture_output=True, text=True)
 t('guard passes compliant dispatch', r.returncode == 0, (r.stdout or '').strip().splitlines()[0] if r.stdout else '')
 r2 = subprocess.run(['/usr/bin/python3', str(gd), '--desc', 'done'], capture_output=True, text=True)
