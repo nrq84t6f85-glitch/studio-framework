@@ -125,9 +125,22 @@ def dispatch(st, stage, agent_type, channel, timeout):
         user = 'Review the draft against quantified gates. Cite lines as evidence, then output one JSON line: {"verdict":"PASS|REJECT","scores":{},"top_fixes":[]}\n[draft]\n' + st.get('write_text', '')
     fx = st.get('gate_fixes') or []
     if stage == 'write' and fx: user += '\n[required fixes]\n' + '\n'.join('- ' + x for x in fx[:5])
-    t0 = time.time()
-    text = call_channel(agent_type, seat_system(agent_type), user, channel, timeout)
-    return (text, round(time.time() - t0, 1)), None
+    t0 = time.time(); err = None
+    for _try in range(3):
+        try:
+            text = call_channel(agent_type, seat_system(agent_type), user, channel, timeout)
+            if (text or '').strip(): return (text, round(time.time() - t0, 1)), None
+            err = 'empty output'
+        except Exception as e:
+            err = str(e)[:120]
+        time.sleep(2)
+    if channel != 'claude':                     # empty channel -> fall back to the agent CLI
+        try:
+            text = call_channel(agent_type, seat_system(agent_type), user, 'claude', timeout)
+            if (text or '').strip(): return (text, round(time.time() - t0, 1)), None
+        except Exception as e:
+            err = str(e)[:120]
+    return None, 'channel failed: ' + str(err)
 
 def cmd_new(a):
     tid = a.task_id or uuid.uuid4().hex[:8]
@@ -138,35 +151,45 @@ def cmd_new(a):
 def cmd_run(a):
     st = load(a.task_id)
     if st is None: raise SystemExit('unknown task-id')
-    for stage, agent_type in PIPELINE:
-        if st['stages'].get(stage, {}).get('status') == 'COMPLETE' and not a.force:
-            print('skip ' + stage); continue
-        got, err = dispatch(st, stage, agent_type, a.channel, a.timeout)
-        if err:
-            st['stages'][stage] = {'status': 'ABANDONED', 'reason': err}; save(st); print(stage + ': ABANDONED ' + err); break
-        text, secs = got
-        f = ROOT / 'work' / (st['id'] + '-' + stage + '-' + now() + '.md'); f.parent.mkdir(parents=True, exist_ok=True)
-        f.write_text(text or '[EMPTY]', encoding='utf-8')
-        checks = run_checks(stage, text)
-        seat = seat_by_type(agent_type) or {'name': agent_type}
-        receipt(st, stage, seat['name'], agent_type, True, str(f), secs, checks, a.channel)
-        if not text:
-            st['stages'][stage] = {'status': 'ABANDONED', 'reason': 'empty output'}; save(st); print(stage + ': ABANDONED empty'); break
-        st[stage + '_text'] = text
-        st['stages'][stage] = {'status': 'COMPLETE'}
-        if stage == 'gate':
-            pv = parse_verdict(text); st.setdefault('gates', {})[a.channel] = pv
-            st['gate_fixes'] = pv.get('top_fixes') or []
+    rounds = 0
+    while True:
+        for stage, agent_type in PIPELINE:
+            cur = st['stages'].get(stage) or {}
+            if cur.get('status') == 'COMPLETE' and not a.force and not cur.get('redo'):
+                print('skip ' + stage); continue
+            got, err = dispatch(st, stage, agent_type, a.channel, a.timeout)
+            if err:
+                st['stages'][stage] = {'status': 'ABANDONED', 'reason': err}; save(st)
+                print(stage + ': ABANDONED ' + err); break
+            text, secs = got
+            f = ROOT / 'work' / (st['id'] + '-' + stage + '-' + now() + '.md')
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(text or '[EMPTY]', encoding='utf-8')
+            seat = seat_by_type(agent_type) or {'name': agent_type}
+            receipt(st, stage, seat['name'], agent_type, True, str(f), secs, run_checks(stage, text), a.channel)
+            st[stage + '_text'] = text
+            st['stages'][stage] = {'status': 'COMPLETE'}
+            if stage == 'gate':
+                pv = parse_verdict(text)
+                st.setdefault('gates', {})[a.channel] = pv
+                st['gate_fixes'] = pv.get('top_fixes') or st.get('gate_fixes') or ['hook must be in the first sentence']
             save(st)
-            if pv.get('verdict') in ('REJECT', 'CONDITIONAL', 'UNPARSED') and st['gate_round'] < a.max_gate_rounds:
-                st['gate_round'] += 1; st['stages']['write'] = {'status': 'REDO'}; save(st)
-                print('gate ' + str(pv.get('verdict')) + ' -> rework write (round ' + str(st['gate_round']) + ')'); continue
-        save(st)
+        bad = None
+        for ch, pv in (st.get('gates') or {}).items():
+            v = (pv or {}).get('verdict')
+            if v in ('REJECT', 'CONDITIONAL', 'UNPARSED'): bad = (ch, v); break
+        if bad and rounds < a.max_gate_rounds:
+            rounds += 1; st['gate_round'] = rounds
+            st['stages']['write'] = {'status': 'REDO', 'redo': True}; save(st)
+            print('gate ' + str(bad[1]) + ' (' + str(bad[0]) + ') -> rework round ' + str(rounds)); continue
+        break
     gj = ROOT / 'gates' / ('gate-' + st['id'] + '-final.json'); gj.parent.mkdir(parents=True, exist_ok=True)
     summary = {'task_id': st['id'], 'stages': {k: v.get('status') for k, v in st['stages'].items()},
-               'verdicts': {c: v.get('verdict') for c, v in (st.get('gates') or {}).items()}, 'rounds': st['gate_round']}
+               'verdicts': {c: (v or {}).get('verdict') for c, v in (st.get('gates') or {}).items()},
+               'gate_rounds': st.get('gate_round', 0)}
     gj.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps(summary, ensure_ascii=False))
+
 
 def cmd_dryrun(a):
     rows = []; ok_all = True
