@@ -18,7 +18,7 @@ import argparse, pathlib, re, sys
 
 def gaps_of(text):
     g = []
-    if not re.search(r'identity[=:]\S+|身份[=：]\S+', text, re.I): g.append('C1-identity')
+    if not re.search(r'identity\s*[=:]\s*\S+|身份\s*[=：]\s*\S+', text, re.I): g.append('C1-identity')
     if not re.search(r'registered|在册', text, re.I): g.append('C1-registered')
     if not re.search(r'deliverable|产出|文件名|\.md|\.py|stdout', text, re.I): g.append('C1-deliverable')
     if re.search(r'already (edited|modified) the source|已改正本|已动正文|已改锚', text, re.I): g.append('C2-readonly breached')
