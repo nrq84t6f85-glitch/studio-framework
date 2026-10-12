@@ -9,5 +9,7 @@ jobs:
         with: { python-version: '3.11' }
       - name: Agent Plugins conformance
         run: python3 scripts/validate-plugin.py .
-      - name: Framework self-test (no model calls)
-        run: python3 tests/test_framework.py
+      - name: Self-tests (no model calls)
+        run: |
+          python3 tests/test_framework.py
+          python3 tests/test_score_and_guard.py

@@ -8,6 +8,12 @@ Local multi-expert studio framework: **Feature Pod** pipeline + **Review Board**
 The valuable part of a multi-agent studio is not the chat UI - it is the *discipline*:
 ordered stages, quantified gates, evidence over self-report, and an audit trail. This repo packages that discipline as ~300 lines of Python you can run locally.
 
+## Mechanisms
+
+- **Weighted gates**: dimension weights + veto line live in ONE source JSON; `runner/score.py` scores and can sweep variants. Proven property: changing weights can flip a verdict, so weights are a governance act (change via documented consensus + version lock).
+- **Dispatch spec guard**: `runner/dispatch_guard.py` enforces seven evidence checks on every work order (identity/registration/deliverable, read-only claim, command trail, run evidence, seat independence, read-back), fail-closed.
+- **Token ledger**: every dispatch should be recorded (G12 gate -> ledger -> token -> dispatch -> read-back); the runner appends ledger entries for each stage.
+
 ## Design
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Highlights:
 - one seat registry (JSON) + one prompt file per seat (Markdown)
